@@ -20,4 +20,3 @@ Upon silent compilation (which indicates zero syntax or structural errors), the 
 ```
 
 Execution successfully routes the program's operations and memory output directly to the standard terminal stream. The CPU processes the compiled bare-metal instructions natively in milliseconds, confirming system stability and optimal execution speed.
-```
