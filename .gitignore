@@ -1,4 +1,12 @@
 # ---------------------------------------------------
+# Environment Variables & Secrets (CRITICAL)
+# ---------------------------------------------------
+# Ignora ficheiros de configuração com passwords e chaves API em qualquer pasta
+.env
+.env.*
+*.env
+
+# ---------------------------------------------------
 # Compiled Binaries (New setup)
 # ---------------------------------------------------
 # Ignores the entire folder where your compiled executables live
