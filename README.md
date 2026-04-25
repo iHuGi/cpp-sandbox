@@ -68,4 +68,3 @@ This universal configuration automatically detects the active editor tab and rou
 3. Initialise the debugging sequence by pressing `F5`.
 
 The engine will launch the executable and freeze execution exactly at the specified breakpoint, allowing full structural analysis of local variables, vectors, and memory states before proceeding.
-```
