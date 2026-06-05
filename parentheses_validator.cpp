@@ -16,7 +16,7 @@ bool isValidParentheses(string expression) {
     vector<char> bracketStack;
 
     // Iterates through the expression character by character to evaluate brackets
-    for (int i = 0; i < expression.length(); i++) {
+    for (size_t i = 0; i < expression.length(); i++) {
         char current = expression[i];
 
         // 1. Opening brackets are pushed onto the stack for deferred evaluation
