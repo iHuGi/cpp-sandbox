@@ -10,25 +10,32 @@ Replace `<filename>` with the target script you want to build:
 
 ```bash
 g++ -std=c++20 <filename>.cpp -o bin/<filename>
+
 ```
+
 > **Architecture Note:** The `-o bin/<filename>` flag explicitly routes the compiled executable into a dedicated `bin/` directory rather than the root folder. This isolates the binaries from the source code, adhering to strict version control guidelines and preventing workspace clutter.
 
 ### Step 2: Execute the Binary
+
 Upon silent compilation (which indicates zero syntax or structural errors), the Linux kernel is instructed to execute the payload. In Unix-based environments, the relative directory path must be explicitly specified to run custom executables:
 
 ```bash
 ./bin/<filename>
+
 ```
 
 Execution successfully routes the program's operations and memory output directly to the standard terminal stream. The CPU processes the compiled bare-metal instructions natively in milliseconds, confirming system stability and optimal execution speed.
 
 ### Step 3: Visual Debugging & Memory Inspection (VS Code Integration)
+
 To peek inside the CPU's execution state and inspect memory allocations in real-time, the workspace is configured with a dynamic, universal debugging profile using GDB (GNU Debugger).
 
 **Prerequisite Compilation:**
 To enable visual breakpoints and memory tracking, the payload must be compiled with debug symbols attached (using the `-g` flag) and the modern C++20 standard explicitly defined:
+
 ```bash
 g++ -g -std=c++20 <filename>.cpp -o bin/<filename>
+
 ```
 
 **System Configuration (`.vscode/launch.json`):**
@@ -60,11 +67,39 @@ This universal configuration automatically detects the active editor tab and rou
         }
     ]
 }
+
 ```
 
 **Execution Protocol:**
+
 1. Place a visual breakpoint (red dot) in the editor gutter next to the target line of code.
 2. Ensure the currently active window in the editor is the target `.cpp` file you wish to debug.
 3. Initialise the debugging sequence by pressing `F5`.
 
 The engine will launch the executable and freeze execution exactly at the specified breakpoint, allowing full structural analysis of local variables, vectors, and memory states before proceeding.
+
+### Step 4: Automated Build Pipeline (The Architect's Approach)
+
+While manual compilation is essential for understanding the compiler's underlying mechanics, maintaining individual build commands does not scale. To orchestrate the entire compilation pipeline automatically, the workspace is equipped with a dynamic `Makefile`.
+
+Instead of manually compiling each script, you can trigger the automated build engine from the root directory. Literally, just use `make` and call it a day:
+
+```bash
+make
+
+```
+
+**System Behavior:**
+The build engine dynamically scans the workspace via pattern matching, detects all `.cpp` source files, resolves dependencies (including external libraries like `libcurl`), and incrementally compiles them into individual, isolated executables inside the `bin/` directory using the specified C++20 flags (`-Wall -Wextra`).
+
+**Workspace Hygiene (Cleanup Protocol):**
+To purge all compiled binaries and reset the execution environment to a clean state, run:
+
+```bash
+make clean
+
+```
+
+```
+
+```
