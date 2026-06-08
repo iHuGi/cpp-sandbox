@@ -99,7 +99,3 @@ To purge all compiled binaries and reset the execution environment to a clean st
 make clean
 
 ```
-
-```
-
-```
