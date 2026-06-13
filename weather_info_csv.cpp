@@ -12,6 +12,10 @@
 using namespace std;
 using json = nlohmann::json;
 
+// Add your absolute paths below
+const string file_path_env = "/home/hugo_azevedo/cpp_train/.env";
+const string file_path = "/home/hugo_azevedo/cpp_train/weather_database.csv";
+
 // ---------------------------------------------------------
 // TIMESTAMP GENERATOR
 // ---------------------------------------------------------
@@ -38,7 +42,7 @@ string get_current_timestamp() {
  */
 string load_api_key_from_env() {
     // ifstream file(".env"); // Relative Path problematic with CRON
-    ifstream file("/home/hugo_azevedo/cpp_train/.env"); // Absolute path for CRON
+    ifstream file(file_path_env); // Absolute path for CRON
     string line;
     
     if (!file.is_open()) {
@@ -144,7 +148,7 @@ int main() {
     };
 
     // string csv_filename = "../weather_database.csv"; // Relative Path problematic with CRON
-    string csv_filename = "/home/hugo_azevedo/cpp_train/weather_database.csv"; // Absolute path for CRON
+    string csv_filename = file_path; // Absolute path for CRON
 
     cout << "--- WEATHER ETL PIPELINE BOOTING UP ---" << endl;
     cout << "Loading API Key from secure .env file..." << endl;
