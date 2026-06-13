@@ -1,10 +1,10 @@
-```markdown
 # C++ Engine Deployment Guide
 
 To initialise the logic engine in the Ubuntu terminal, the engineering team (me) utilises a standardised two-step deployment process, featuring an isolated binary directory for optimal workspace hygiene.
 
 ### Step 1: Compile the Source Code
-The human-readable C++ source code must be translated into a bare-metal machine code binary using the GNU C++ compiler (`g++`). This compilation is executed via the terminal, routing the payload to our dedicated build folder. 
+
+The human-readable C++ source code must be translated into a bare-metal machine code binary using the GNU C++ compiler (`g++`). This compilation is executed via the terminal, routing the payload to our dedicated build folder.
 
 Replace `<filename>` with the target script you want to build:
 
@@ -76,26 +76,73 @@ This universal configuration automatically detects the active editor tab and rou
 2. Ensure the currently active window in the editor is the target `.cpp` file you wish to debug.
 3. Initialise the debugging sequence by pressing `F5`.
 
-The engine will launch the executable and freeze execution exactly at the specified breakpoint, allowing full structural analysis of local variables, vectors, and memory states before proceeding.
-
 ### Step 4: Automated Build Pipeline (The Architect's Approach)
 
 While manual compilation is essential for understanding the compiler's underlying mechanics, maintaining individual build commands does not scale. To orchestrate the entire compilation pipeline automatically, the workspace is equipped with a dynamic `Makefile`.
 
-Instead of manually compiling each script, you can trigger the automated build engine from the root directory. Literally, just use `make` and call it a day:
+Instead of manually compiling each script, you can trigger the automated build engine from the root directory:
 
 ```bash
 make
 
 ```
 
-**System Behavior:**
-The build engine dynamically scans the workspace via pattern matching, detects all `.cpp` source files, resolves dependencies (including external libraries like `libcurl`), and incrementally compiles them into individual, isolated executables inside the `bin/` directory using the specified C++20 flags (`-Wall -Wextra`).
-
 **Workspace Hygiene (Cleanup Protocol):**
-To purge all compiled binaries and reset the execution environment to a clean state, run:
+To purge all compiled binaries and reset the execution environment, run:
 
 ```bash
 make clean
+
+```
+
+### Step 5: Automated Pipeline Scheduling (The "Set-and-Forget" Approach)
+
+To ensure the ETL pipeline operates autonomously, we decouple the execution into two layers: a **Bash Script** (the instruction) and **Cron** (the scheduler).
+
+> **CRITICAL PATH NOTE:** Linux Cron jobs start in a neutral system environment and do not know your project folder. Always use **absolute paths** (e.g., `/home/hugo_azevedo/...`) inside your C++ code for file I/O (CSV, .env) and inside your Bash scripts. Using relative paths like `../` will fail in production.
+
+**1. Create the Execution Script (`weather_sync.sh`):**
+Create this file in the project's root folder. It forces the kernel into the correct directory before executing:
+
+```bash
+#!/bin/bash
+# ETL Pipeline Runner with absolute pathing
+cd /home/hugo_azevedo/cpp_train/bin/
+./weather_info_csv >> /home/hugo_azevedo/cpp_train/error.log 2>&1
+
+```
+
+*Don't forget to give it execution permissions:*
+
+```bash
+chmod +x weather_sync.sh
+
+```
+
+**2. Configure the Cron Job:**
+The `cron` scheduler acts as the system manager. Open the configuration editor:
+
+```bash
+crontab -e
+
+```
+
+Add this line to the end of the file to trigger the sync every hour (at the top of the hour):
+
+```bash
+0 * * * * /home/hugo_azevedo/cpp_train/weather_sync.sh
+
+```
+
+**3. Verification (Debugging the Background Process):**
+Since Cron runs in the background, you won't see terminal output. Use these commands to confirm it's alive:
+
+* **Check if it triggered:** ```bash
+grep "weather_info_csv" /var/log/syslog | tail -n 5
+
+```
+* **Check logs:** If the pipeline fails, inspect the error output: 
+```bash
+cat /home/hugo_azevedo/cpp_train/error.log
 
 ```
