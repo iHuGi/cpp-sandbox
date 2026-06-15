@@ -1598,3 +1598,83 @@ Initializing HTTP Client...
 
 --- PIPELINE SHUTDOWN COMPLETE ---
 Exit code: 0
+--- Run: 2026-06-15 18:00:01 ---
+--- WEATHER ETL PIPELINE BOOTING UP ---
+Loading API Key from secure .env file...
+API Key Loaded Successfully.
+Initializing HTTP Client...
+-----------------------------------
+
+[LOG] Ingested Lisbon into database. (ID: 1181)
+[LOG] Ingested Porto into database. (ID: 1182)
+[LOG] Ingested London into database. (ID: 1183)
+[LOG] Ingested Paris into database. (ID: 1184)
+[LOG] Ingested Berlin into database. (ID: 1185)
+[LOG] Ingested Madrid into database. (ID: 1186)
+[LOG] Ingested Rome into database. (ID: 1187)
+[LOG] Ingested New York into database. (ID: 1188)
+[LOG] Ingested Barcelona into database. (ID: 1189)
+[LOG] Ingested Miami into database. (ID: 1190)
+
+--- PIPELINE SHUTDOWN COMPLETE ---
+Exit code: 0
+--- Run: 2026-06-15 18:30:01 ---
+--- WEATHER ETL PIPELINE BOOTING UP ---
+Loading API Key from secure .env file...
+API Key Loaded Successfully.
+Initializing HTTP Client...
+-----------------------------------
+
+[LOG] Ingested Lisbon into database. (ID: 1191)
+[LOG] Ingested Porto into database. (ID: 1192)
+[LOG] Ingested London into database. (ID: 1193)
+[LOG] Ingested Paris into database. (ID: 1194)
+[LOG] Ingested Berlin into database. (ID: 1195)
+[LOG] Ingested Madrid into database. (ID: 1196)
+[LOG] Ingested Rome into database. (ID: 1197)
+[LOG] Ingested New York into database. (ID: 1198)
+[LOG] Ingested Barcelona into database. (ID: 1199)
+[LOG] Ingested Miami into database. (ID: 1200)
+
+--- PIPELINE SHUTDOWN COMPLETE ---
+Exit code: 0
+--- Run: 2026-06-15 19:00:01 ---
+--- WEATHER ETL PIPELINE BOOTING UP ---
+Loading API Key from secure .env file...
+API Key Loaded Successfully.
+Initializing HTTP Client...
+-----------------------------------
+
+[LOG] Ingested Lisbon into database. (ID: 1210)
+[LOG] Ingested Porto into database. (ID: 1211)
+[LOG] Ingested London into database. (ID: 1212)
+[LOG] Ingested Paris into database. (ID: 1213)
+[LOG] Ingested Berlin into database. (ID: 1214)
+[LOG] Ingested Madrid into database. (ID: 1215)
+[LOG] Ingested Rome into database. (ID: 1216)
+[LOG] Ingested New York into database. (ID: 1217)
+[LOG] Ingested Barcelona into database. (ID: 1218)
+[LOG] Ingested Miami into database. (ID: 1219)
+
+--- PIPELINE SHUTDOWN COMPLETE ---
+Exit code: 0
+--- Run: 2026-06-15 19:30:02 ---
+--- WEATHER ETL PIPELINE BOOTING UP ---
+Loading API Key from secure .env file...
+API Key Loaded Successfully.
+Initializing HTTP Client...
+-----------------------------------
+
+[LOG] Ingested Lisbon into database. (ID: 1238)
+[LOG] Ingested Porto into database. (ID: 1239)
+[LOG] Ingested London into database. (ID: 1240)
+[LOG] Ingested Paris into database. (ID: 1241)
+[LOG] Ingested Berlin into database. (ID: 1242)
+[LOG] Ingested Madrid into database. (ID: 1243)
+[LOG] Ingested Rome into database. (ID: 1244)
+[LOG] Ingested New York into database. (ID: 1245)
+[LOG] Ingested Barcelona into database. (ID: 1246)
+[LOG] Ingested Miami into database. (ID: 1247)
+
+--- PIPELINE SHUTDOWN COMPLETE ---
+Exit code: 0
