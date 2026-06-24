@@ -1,208 +1,151 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
-#include <fstream>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <chrono>
 
 using namespace std;
 using json = nlohmann::json;
 
-// ---------------------------------------------------------
-// ENV FILE PARSER
-// ---------------------------------------------------------
-/**
- * @brief Parses a local .env file to safely extract the target API key.
- * * Since C++ lacks a native dotenv library, this function acts as a lightweight 
- * file reader. It scans the file line by line, identifies key-value pairs, 
- * and sanitizes the output by removing whitespace and quotation marks.
- * * @return string The sanitized API key, or an empty string if the key is not found.
- */
-string load_api_key_from_env() {
-    ifstream file(".env"); // The program opens the .env file in the current working directory
-    string line;
-    
-    if (!file.is_open()) {
-        cerr << "[!] File Error: The system could not locate the .env file!" << endl;
-        return "";
-    }
+// ============================================================================
+// 1. ENV LOADER CLASS
+// ============================================================================
+class EnvLoader {
+public:
+    static string getApiKey(const string& path) {
+        ifstream file(path);
+        string line;
 
-    // The loop reads the file line by line until the end of the document
-    while (getline(file, line)) {
-        // The program searches the current line for the assignment operator (=)
-        size_t pos = line.find('=');
-        
-        // If 'pos' is NOT equal to string::npos, it means the '=' was successfully found
-        if (pos != string::npos) {
-            
-            // The string is split into two parts based on the position of the '='
-            // substr(0, pos) starts at index 0 and extracts 'pos' amount of characters (The Key)
-            string key = line.substr(0, pos);
-            
-            // substr(pos + 1) starts one character after the '=' and grabs the rest of the line (The Value)
-            string value = line.substr(pos + 1);
+        if (!file.is_open()) return "";
 
-            // The program trims trailing spaces from the key to ensure an accurate match
-            key.erase(key.find_last_not_of(" \t") + 1);
+        while (getline(file, line)) {
+            size_t pos = line.find('=');
+            if (pos != string::npos) {
+                string key = line.substr(0, pos);
+                string value = line.substr(pos + 1);
 
-            // The system checks if the extracted key matches the required target
-            if (key == "WEATHER_API") {
-                
-                // The program searches for the first and last characters in the value 
-                // that are NOT spaces (\t) or quotation marks (\")
-                size_t first = value.find_first_not_of(" \t\"");
-                size_t last = value.find_last_not_of(" \t\"");
-                
-                // If the value is not empty or composed entirely of junk characters...
-                if (first != string::npos && last != string::npos) {
-                    // The system extracts only the valid characters.
-                    // 'last - first + 1' calculates the exact length of the clean string.
-                    return value.substr(first, (last - first + 1));
+                key.erase(key.find_last_not_of(" \t") + 1);
+
+                if (key == "WEATHER_API") {
+                    size_t first = value.find_first_not_of(" \t\"");
+                    size_t last = value.find_last_not_of(" \t\"");
+                    if (first != string::npos && last != string::npos) {
+                        return value.substr(first, (last - first + 1));
+                    }
                 }
             }
         }
+        return "";
     }
-    return ""; // Returns an empty string if the file finishes and the key was never found
-}
+};
 
-// ---------------------------------------------------------
-// LIBCURL CALLBACK FUNCTION
-// ---------------------------------------------------------
-/**
- * @brief Appends incoming data chunks from libcurl into a target string buffer.
- * * libcurl does not return the entire HTTP response at once. Instead, the library 
- * triggers this callback function multiple times as data arrives over the network.
- * * @param contents Pointer to the delivered data chunk in system memory.
- * @param size Size of one data item (usually 1 byte).
- * @param nmemb Number of items (total bytes in this specific chunk).
- * @param s Pointer to the target std::string where the final JSON payload is stored.
- * @return size_t The exact number of bytes safely processed by the application.
- */
+// ============================================================================
+// 2. LIBCURL CALLBACK
+// ============================================================================
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* s) {
-    size_t newLength = size * nmemb; 
-    
-    try {
-        // The program accesses the target string via pointer and appends the new chunk
-        s->append((char*)contents, newLength);
-        
-        // The function returns the exact byte count back to libcurl to confirm successful storage
-        return newLength; 
-        
-    } catch(bad_alloc& e) {
-        // If the system runs out of RAM, returning 0 triggers a safe libcurl abort
-        return 0; 
-    }
+    size_t total = size * nmemb;
+    try { s->append((char*)contents, total); return total; }
+    catch (...) { return 0; }
 }
 
+// ============================================================================
+// 3. ENTRY POINT
+// ============================================================================
 int main() {
-    // ---------------------------------------------------------
-    // CONFIGURATION & SETUP
-    // ---------------------------------------------------------
-    vector<string> cities = {
-        "Lisbon", "Porto", "London", "Paris", "Berlin", 
-        "Madrid", "Rome", "New York", "Barcelona", "Miami"
-    };
+    // -----------------------------------------------------
+    // 1. START TIMER AT THE ABSOLUTE BEGINNING
+    // -----------------------------------------------------
+    auto start_time = chrono::high_resolution_clock::now();
 
-    cout << "--- WEATHER PIPELINE BOOTING UP ---" << endl;
-    cout << "Loading API Key from secure .env file..." << endl;
+    cout << "--- CONCURRENT WEATHER PIPELINE (ASYNC I/O) ---" << endl;
+
+    string key = EnvLoader::getApiKey(".env");
+    if (key.empty()) key = EnvLoader::getApiKey("../.env");
     
-    // The program attempts to read the local .env file
-    string api_key = load_api_key_from_env();
-    
-    // Failsafe: The application aborts immediately if the key is missing to prevent network errors
-    if (api_key.empty()) {
-        cerr << "[!] CRITICAL: WEATHER_API variable not found or empty." << endl;
-        cerr << "--- SHUTDOWN ---" << endl;
+    if (key.empty()) {
+        cerr << "[!] CRITICAL ABORT: API Key not found." << endl;
         return 1;
     }
 
-    cout << "API Key Loaded Successfully." << endl;
-    cout << "Initializing HTTP Client..." << endl;
-    cout << "-----------------------------------" << endl << endl;
+    const vector<string> cities = {
+        "Aveiro","Beja","Braga","Braganca","Castelo Branco",
+        "Coimbra","Evora","Faro","Funchal","Guarda",
+        "Leiria","Lisbon","Ponta Delgada","Portalegre","Porto",
+        "Santarem","Setubal","Viana do Castelo","Vila Real","Viseu"
+    };
 
-    // The libcurl environment is initialized globally before any requests are made
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    CURL* curl = curl_easy_init();
 
-    // The program verifies that the curl handle was successfully created in memory
-    if(curl) {
-        // --- START THE ETL LOOP ---
-        for(const auto& city : cities) {
-            
-            // ---------------------------------------------------------
-            // URL ENCODING & SETUP
-            // ---------------------------------------------------------
-            
-            // The libcurl engine safely encodes special characters (e.g., spaces to "%20")
-            // The length is explicitly provided to prevent reading past the end of the string
-            char* encoded_city = curl_easy_escape(curl, city.c_str(), city.length());
-            
-            // The dynamic API endpoint is constructed using the safely encoded city name
-            string url = "http://api.openweathermap.org/data/2.5/weather?q=" + string(encoded_city) + "&appid=" + api_key + "&units=metric";
-            
-            // Memory Management: The dynamically allocated char array is manually freed to prevent RAM leaks
-            curl_free(encoded_city);
-            
-            // The curl handle is configured with the target URL
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            
-            // A string buffer is created in memory to hold the eventual JSON payload
-            string response_string; 
-            
-            // The custom WriteCallback function is assigned to handle incoming data
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            
-            // The memory address of the string buffer is passed so the callback knows where to dump the payload
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
+    CURLM* multi = curl_multi_init();
+    vector<CURL*> handles;
+    vector<string> responses(cities.size());
+    int still_running = 0;
 
-            // --- EXECUTION PHASE ---
-            // The engine connects to the internet, executes the GET request, and triggers the callback
-            CURLcode res = curl_easy_perform(curl);
+    // Initialize and attach all requests to the multi-handle
+    for (size_t i = 0; i < cities.size(); i++) {
+        CURL* c = curl_easy_init();
+        if (!c) continue;
+        handles.push_back(c);
+        
+        char* encoded = curl_easy_escape(c, cities[i].c_str(), cities[i].size());
+        string url = "https://api.openweathermap.org/data/2.5/weather?q=" + string(encoded) + "&appid=" + key + "&units=metric";
+        curl_free(encoded);
 
-            // --- ERROR HANDLING & PARSING ---
-            if(res != CURLE_OK) {
-                // Catches network drops or internal curl errors
-                cerr << "[!] Network Failure processing " << city << ": " << curl_easy_strerror(res) << endl;
-            } else {
-                try {
-                    // The raw string payload is converted into a searchable JSON object
-                    auto data = json::parse(response_string);
-                    
-                    // The program checks the internal API status code to ensure a valid response
-                    if (data.contains("cod") && data["cod"] == 200) {
-                        
-                        // Telemetry metrics are extracted from the JSON tree
-                        string city_name = data["name"];
-                        double temp = data["main"]["temp"];
-                        string condition = data["weather"][0]["main"];
-                        double lon = data["coord"]["lon"];
-                        double lat = data["coord"]["lat"];
+        curl_easy_setopt(c, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(c, CURLOPT_WRITEDATA, &responses[i]);
+        curl_easy_setopt(c, CURLOPT_TIMEOUT, 10L);
+        curl_easy_setopt(c, CURLOPT_CONNECTTIMEOUT, 5L);
 
-                        // The formatted metrics are printed to the console interface
-                        cout << ">> " << city_name << " <<" << endl;
-                        cout << " Temperature : " << temp << " C" << endl;
-                        cout << " Condition   : " << condition << endl;
-                        cout << " Coordinates : (Lat: " << lat << ", Lon: " << lon << ")" << endl;
-                        cout << "-----------------------------------" << endl;
-                    } else {
-                        // Catches API-side errors, such as typing a city name that doesn't exist
-                        string error_msg = data.value("message", "Unknown API error");
-                        cerr << "[!] API Error for " << city << ": " << error_msg << endl;
-                    }
-                } catch (json::parse_error& e) {
-                    // Catches scenarios where the payload is corrupt or returned HTML instead of JSON
-                    cerr << "[!] JSON Parse Crash for " << city << ": " << e.what() << endl;
-                }
-            }
-        } // The loop resets and moves to the next city in the vector
-
-        // The specific curl handle is destroyed to free up system resources
-        curl_easy_cleanup(curl);
+        curl_multi_add_handle(multi, c);
     }
-    
-    // The entire libcurl environment undergoes a complete and safe shutdown
+
+    // Fire all requests concurrently (Non-blocking I/O loop)
+    curl_multi_perform(multi, &still_running);
+
+    int max_loops = 1000;
+    while (still_running && max_loops--) {
+        int numfds;
+        // Wait for network activity, max 1 second timeout per check
+        curl_multi_wait(multi, nullptr, 0, 1000, &numfds);
+        curl_multi_perform(multi, &still_running);
+    }
+
+    // Clean up the CURL handles
+    for (auto c : handles) {
+        curl_multi_remove_handle(multi, c);
+        curl_easy_cleanup(c);
+    }
+    curl_multi_cleanup(multi);
+
+    // Parse the populated strings and print the results
+    for (size_t i = 0; i < responses.size(); i++) {
+        try {
+            auto data = json::parse(responses[i]);
+            if (data.contains("cod") && data["cod"] == 200) {
+                cout << ">> " << string(data["name"]) << " <<" << endl;
+                cout << " Temp : " << data["main"]["temp"].get<double>() << " C" << endl;
+                cout << " Cond : " << string(data["weather"][0]["main"]) << endl;
+                cout << "-----------------------------------" << endl;
+            } else {
+                cerr << "[!] Failed to fetch data for " << cities[i] << endl;
+            }
+        } catch (...) {
+            cerr << "[!] JSON Parse Error or empty response for " << cities[i] << endl;
+        }
+    }
+
     curl_global_cleanup();
-    
-    cout << "\n--- PIPELINE SHUTDOWN COMPLETE ---" << endl;
+
+    // -----------------------------------------------------
+    // 2. STOP TIMER AT THE ABSOLUTE END
+    // -----------------------------------------------------
+    auto end_time = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
+
+    cout << "\nTotal C++ End-to-End time: " << duration << " milliseconds." << endl;
+
     return 0;
 }
