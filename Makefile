@@ -1,6 +1,8 @@
 # Compiler and compilation flags
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra
+CXXFLAGS = -std=c++20 -Wall -Wextra -g # Use this doe debug
+# CXXFLAGS = -std=c++20 -Wall -Wextra
+
 
 # Identifies all source files in the current directory
 SRC = $(wildcard *.cpp)
